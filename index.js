@@ -1,6 +1,6 @@
 const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys")
 
-const OWNER = "91XXXXXXXXXX@s.whatsapp.net"
+const OWNER = "48699521992@s.whatsapp.net"
 
 async function startBot() {
 
