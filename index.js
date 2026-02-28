@@ -1,15 +1,35 @@
 const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys")
 
-const OWNER = "48699521992@s.whatsapp.net"
-
 async function startBot() {
 
 const { state, saveCreds } = await useMultiFileAuthState("auth")
 
-const sock = makeWASocket({ auth: state })
+const sock = makeWASocket({
+auth: state
+})
 
 sock.ev.on("creds.update", saveCreds)
 
+
+// 🔐 PAIRING LOGIN SYSTEM
+if (!sock.authState.creds.registered) {
+
+const rl = require("readline").createInterface({
+input: process.stdin,
+output: process.stdout
+})
+
+rl.question("Enter your WhatsApp number: ", async (number) => {
+
+const code = await sock.requestPairingCode(number)
+console.log(`Pairing Code: ${code}`)
+
+})
+
+}
+
+
+// 📩 MESSAGE SYSTEM
 sock.ev.on("messages.upsert", async ({ messages }) => {
 
 const msg = messages[0]
@@ -48,19 +68,13 @@ let menu = `
 
 ➤ Welcome Msg
 ➤ Admin Alert
-
-🤖 BOT
-
-➤ !bot (Owner Check)
-
-⚡ Type Command To Use
 `
 
 sock.sendMessage(from,{text:menu})
 }
 
 
-// TAG ALL
+// 📢 TAG ALL
 if (body === "!tagall") {
 
 const metadata = await sock.groupMetadata(from)
@@ -73,7 +87,7 @@ mentions: members
 }
 
 
-// KICK
+// 🚫 KICK
 if (body.startsWith("!kick")) {
 
 const metadata = await sock.groupMetadata(from)
@@ -84,7 +98,6 @@ if(!isAdmin) return sock.sendMessage(from,{text:"❌ Admin Only"})
 const mentioned = msg.message.extendedTextMessage.contextInfo.mentionedJid
 
 await sock.groupParticipantsUpdate(from, mentioned, "remove")
-
 sock.sendMessage(from,{text:"🚫 Removed"})
 }
 
@@ -107,7 +120,7 @@ sock.sendMessage(from,{text:"⚠️ All Members Removed"})
 }
 
 
-// PROMOTE
+// 👑 PROMOTE
 if (body.startsWith("!promote")) {
 
 const mentioned = msg.message.extendedTextMessage.contextInfo.mentionedJid
@@ -117,7 +130,7 @@ sock.sendMessage(from,{text:"👑 Promoted"})
 }
 
 
-// DEMOTE
+// ⬇️ DEMOTE
 if (body.startsWith("!demote")) {
 
 const mentioned = msg.message.extendedTextMessage.contextInfo.mentionedJid
@@ -127,7 +140,7 @@ sock.sendMessage(from,{text:"⬇️ Demoted"})
 }
 
 
-// ANTI LINK
+// 🔗 ANTI LINK
 if (body.includes("https://chat.whatsapp.com")) {
 
 const metadata = await sock.groupMetadata(from)
@@ -139,19 +152,10 @@ await sock.sendMessage(from,{delete: msg.key})
 }
 }
 
-
-// OWNER
-if(body === "!bot"){
-if(sender !== OWNER)
-return sock.sendMessage(from,{text:"❌ Owner Only"})
-
-sock.sendMessage(from,{text:"🤖 Bot Running"})
-}
-
 })
 
 
-// WELCOME + ADMIN ALERT
+// 👋 WELCOME + 👑 ADMIN ALERT
 sock.ev.on("group-participants.update", async (data) => {
 
 if(data.action === "add"){
